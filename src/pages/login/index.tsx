@@ -1,10 +1,14 @@
-import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Container } from '../../components/container'
 import logoImg from './../../assets/logo.svg'
 import { Input } from '../../components/input'
 import {useForm} from 'react-hook-form';
 import {z} from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {signInWithEmailAndPassword, signOut} from 'firebase/auth';
+import {auth} from './../../services/firebase';
+
 
 
 const schemaLogin = z.object({
@@ -18,13 +22,30 @@ type LoginFormData = z.infer<typeof schemaLogin>
 
 export function Login() {
 
+  const navigate = useNavigate();
+
   const {register, handleSubmit, formState:{errors}} = useForm<LoginFormData>({
     resolver: zodResolver(schemaLogin),
     mode: 'onChange'
   })
 
-  function onSubmit(data:LoginFormData){
 
+  useEffect(() => {
+    async function handleLogout(){
+      await signOut(auth)
+    }
+
+    handleLogout();
+  },[])
+
+  function onSubmit(data:LoginFormData){
+    signInWithEmailAndPassword(auth, data.email, data.password)
+    .then(() => {
+      navigate('/dashboard', {replace: true})
+    })
+    .catch((error) => {
+      console.log(error)
+    })
   }
 
   return(
@@ -65,6 +86,11 @@ export function Login() {
               Acessar
             </button>
         </form>
+
+        <Link to='/register'>
+          Não possui uma conta? Cadastre-se
+        </Link>
+
       </div>
     </Container>
   )
